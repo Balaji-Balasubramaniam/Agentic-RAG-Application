@@ -81,26 +81,28 @@ UI: `http://127.0.0.1:8000/ui`
   - `source`
 
 ## 5) LangGraph Workflow Overview
+
+Simple view:
+- User asks a question
+- Query is refined (and clarified with user only if needed)
+- Relevant chunks are retrieved from the indexed PDF
+- Answer is synthesized with citations
+- RAGAS evaluates answer quality before final response
+
 ```mermaid
-flowchart TD
-  A[User Query] --> B[Query Refinement Agent]
-  B -->|ok| C[User Confirmation Gate]
-  B -->|error| R[Retry Router]
-
-  C -->|confirmed| D[Retrieval Agent]
-  C -->|awaiting/rejected| Z[End]
-
-  D -->|ok| E[Answer Synthesizer Agent]
-  D -->|error| R
-
-  E -->|ok| Z
-  E -->|error| R
-
-  R -->|retry_count <= max_retries| B2[Retry Target Node]
-  B2 --> B
-  R -->|retry_count > max_retries| F[Retry Fallback]
-  F --> Z
+flowchart LR
+  A[User Query] --> B[Query Refinement]
+  B --> C{Needs Clarification?}
+  C -->|Yes| D[Ask User to Confirm]
+  D -->|Confirmed| E[Retrieval]
+  D -->|Rejected| X[Stop and Rephrase]
+  C -->|No| E[Retrieval]
+  E --> F[Answer Synthesis with Citations]
+  F --> G[RAGAS Evaluation + Safety Gate]
+  G --> H[Final Response]
 ```
+
+Detailed architecture and full retry routing: [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 ## 6) State Schema (Stored Between Nodes)
 Core fields in `WorkflowState`:
