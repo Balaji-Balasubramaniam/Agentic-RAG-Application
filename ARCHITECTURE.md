@@ -12,11 +12,8 @@ flowchart TD
   API --> ASK[Q&A Pipeline\nRefine -> Confirm if needed -> Retrieve]
   ASK --> STORE
   STORE --> GEN[Generate Answer\nAnswer Synthesizer + Citations]
-  GEN --> SAFE{RAGAS Faithfulness Gate}
-  SAFE -->|Pass| OK[Final Answer + Sources]
-  SAFE -->|Fail| FB[Fallback Response]
-
+  GEN --> RAGAS[RAGAS Evaluation]
+  RAGAS --> OK[Final Answer + Sources + Metrics]
   OK --> API
-  FB --> API
   API --> U
 ```
