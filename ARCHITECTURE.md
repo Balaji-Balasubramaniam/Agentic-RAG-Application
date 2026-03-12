@@ -10,11 +10,11 @@ flowchart TD
   IDX --> STORE[(Chroma Vector DB + Parent Docstore)]
 
   API --> ORCH[LangGraph Orchestrator]
-  ORCH --> A1[Query Refinement Agent]
-  A1 --> A2[Retrieval Agent]
+  ORCH --> A1[Agent 1: Query Refinement\nincludes clarification/confirmation]
+  A1 --> A2[Agent 2: Retrieval]
   A2 --> STORE
-  STORE --> A3[Answer Synthesizer Agent]
-  A3 -.on failure: retry.-> ORCH
+  STORE --> A3[Agent 3: Answer Synthesizer]
+  A3 -.retry on failure.-> ORCH
   A3 --> RAGAS[RAGAS Evaluation]
   RAGAS --> OK[Final Answer + Sources + Metrics]
   OK --> API
