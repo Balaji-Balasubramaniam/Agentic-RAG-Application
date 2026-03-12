@@ -1,38 +1,25 @@
 # Application Architecture
 
-High-level architecture (simple view).
+Replicated workflow sketch (same structure and routing).
 
 ```mermaid
 flowchart TD
-  UQ[User Query] --> ORCH[LangGraph Orchestrator]
+  UQ[User Query] --> QR[Query Refining Agent]
 
-  subgraph WF[Orchestrated Workflow]
-    QR[Query Refinement Agent]
-    CG{User Confirmation Gate}
-    RA[Retrieval Agent]
-    AS[Answer Synthesizer Agent]
-    RR[Retry Router]
-    RT[Retry Target Node]
-    RF[Retry Fallback]
-    END([End])
-  end
+  QR -->|Yes| RA[Retrieval Agent]
+  QR -->|No| UCG[User Confirmation Gate]
+  UCG -->|Yes| RA
+  UCG -->|No| END([End])
 
-  ORCH --> QR
-  QR -->|ok| CG
-  QR -->|error| RR
+  RA -->|Yes| ASA[Answer Synthesizer Agent]
+  ASA -->|OK| END
 
-  CG -->|yes| RA
-  CG -->|no| END
+  QR -->|Error| RR[Retry Router]
+  RA -->|Error| RR
+  ASA -->|Error| RR
 
-  RA -->|ok| AS
-  RA -->|error| RR
-
-  AS -->|ok| RAGAS[RAGAS Evaluation]
-  AS -->|error| RR
-  RAGAS --> END
-
-  RR -->|retry_count <= max_retries| RT
-  RT --> QR
-  RR -->|retry_count > max_retries| RF
+  RR -->|retry < max| RTN[Retry Target Node]
+  RTN --> QR
+  RR -->|max retry attempt| RF[Retry Fallback]
   RF --> END
 ```
