@@ -4,19 +4,35 @@ High-level architecture (simple view).
 
 ```mermaid
 flowchart TD
-  U[User + Web UI] --> API[FastAPI API]
+  UQ[User Query] --> ORCH[LangGraph Orchestrator]
 
-  API --> IDX[Indexing\nPDF -> Preprocess -> Embed]
-  IDX --> STORE[(Chroma Vector DB + Parent Docstore)]
+  subgraph WF[Orchestrated Workflow]
+    QR[Query Refinement Agent]
+    CG{User Confirmation Gate}
+    RA[Retrieval Agent]
+    AS[Answer Synthesizer Agent]
+    RR[Retry Router]
+    RT[Retry Target Node]
+    RF[Retry Fallback]
+    END([End])
+  end
 
-  API --> ORCH[LangGraph Orchestrator]
-  ORCH --> A1[Agent 1: Query Refinement\nincludes clarification/confirmation]
-  A1 --> A2[Agent 2: Retrieval]
-  A2 --> STORE
-  STORE --> A3[Agent 3: Answer Synthesizer]
-  A3 -.retry on failure.-> ORCH
-  A3 --> RAGAS[RAGAS Evaluation]
-  RAGAS --> OK[Final Answer + Sources + Metrics]
-  OK --> API
-  API --> U
+  ORCH --> QR
+  QR -->|ok| CG
+  QR -->|error| RR
+
+  CG -->|yes| RA
+  CG -->|no| END
+
+  RA -->|ok| AS
+  RA -->|error| RR
+
+  AS -->|ok| RAGAS[RAGAS Evaluation]
+  AS -->|error| RR
+  RAGAS --> END
+
+  RR -->|retry_count <= max_retries| RT
+  RT --> QR
+  RR -->|retry_count > max_retries| RF
+  RF --> END
 ```
