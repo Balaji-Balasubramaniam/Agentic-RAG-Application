@@ -6,20 +6,15 @@ High-level architecture (simple view).
 flowchart TD
   U[User + Web UI] --> API[FastAPI API]
 
-  API --> IDX[Indexing Pipeline\nUpload PDF -> Preprocess -> Embed]
+  API --> IDX[Indexing\nPDF -> Preprocess -> Embed]
   IDX --> STORE[(Chroma Vector DB + Parent Docstore)]
 
   API --> ORCH[LangGraph Orchestrator]
-  ORCH --> A1[Agent 1: Query Refinement]
-  A1 --> A2[Agent 2: Retrieval]
+  ORCH --> A1[Query Refinement Agent]
+  A1 --> A2[Retrieval Agent]
   A2 --> STORE
-  STORE --> A3[Agent 3: Answer Synthesizer]
-  A1 -.error.-> ORCH
-  A2 -.error.-> ORCH
-  A3 -.error.-> ORCH
-  ORCH -.retry loop.-> A1
-  ORCH -.retry loop.-> A2
-  ORCH -.retry loop.-> A3
+  STORE --> A3[Answer Synthesizer Agent]
+  A3 -.on failure: retry.-> ORCH
   A3 --> RAGAS[RAGAS Evaluation]
   RAGAS --> OK[Final Answer + Sources + Metrics]
   OK --> API
